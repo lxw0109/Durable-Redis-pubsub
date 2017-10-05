@@ -9,24 +9,24 @@
 """
 
 import json
-import random
 import time
 
 from public_utils import *
 
 
 def publish_news_id(redis_conn, news_id_list):
-    # TODO: interface to "Chen He"
+    # TODO: interface to "He Chen"
     """
     :param redis_conn: the redis connection
     :param news_id_list: list of news_id
     :return: None
     """
     for news_id in news_id_list:
-        content = str(news_id)
-        redis_conn.publish(CHANNEL_NAME, content)
-        print("publish: {0}".format(content))
-        append_message(redis_conn, content)
+        content = "message-" + str(news_id)
+        msg_json, msg_id = append_message(redis_conn, content)
+
+        redis_conn.publish(CHANNEL_NAME, msg_json)
+        print("publish: {0}".format(msg_json))
 
 
 def stats_init(conn):
@@ -40,7 +40,7 @@ def stats_init(conn):
 
     conn.zadd(PROC_STATS, **recipients_dic)
 
-    return append_message(conn, "Initialize the PROC_STATS. OK.")
+    # return append_message(conn, "Initialize the PROC_STATS. OK.")
 
 
 def append_message(conn, message_content):
@@ -48,11 +48,14 @@ def append_message(conn, message_content):
     Append new elements into MESSAGES.
     :param conn: redis connection
     :param message_content: the content of the message
-    :return: 
+    :return: tuple of (msg_json, msg_id)
     """
     uuid_str = acquire_lock(conn)
     if not uuid_str:
         raise Exception("Couldn't get the lock.")
+
+    msg_json = ""
+    msg_id = ""
     try:
         msg_id = conn.incr(MSG_ID)
         """
@@ -63,11 +66,15 @@ def append_message(conn, message_content):
             "timestamp": current_time,
             "message": message_content,
         })
-        conn.zadd(MESSAGES, msg_json, msg_id)
         """
-        conn.zadd(MESSAGES, message_content, msg_id)
+        msg_json = json.dumps({
+            "msg_id": msg_id,
+            "message": message_content,
+        })
+        conn.zadd(MESSAGES, msg_json, msg_id)
     finally:
         release_lock(conn, uuid_str)
+        return msg_json, msg_id
 
 
 if __name__ == "__main__":
@@ -76,7 +83,7 @@ if __name__ == "__main__":
     # initialize redis keys.
     stats_init(redis_conn)
 
-    count = 0
+    count = 1
     # TODO: 暂时先用time.sleep()来模拟crontab
     while 1:
         publish_news_id(redis_conn, range(count, count+10))

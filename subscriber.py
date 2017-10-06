@@ -26,6 +26,7 @@ def process_news(redis_conn, subscriber, message):
     :return:
     """
     # NOTE: 进入该函数需要首先更新状态
+    # 每处理一条message，更新一次Redis中的处理进度，并删除被所有subscriber接收到的messages。防止程序意外退出后，已处理的message被重复处理。
     update_process_stats(redis_conn, subscriber, message["msg_id"])
 
     print(" --Processing message:{0}".format(message))

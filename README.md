@@ -15,5 +15,5 @@ The architecture of the mechanism is as follows.
 
 ### NOTE
 For some reason, this mechanism is implemented by Python2.7 instead of Python 3.6+.  
-requirements.txt is provided [here]().
+requirements: redis==2.10.5
 

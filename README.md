@@ -9,9 +9,9 @@ In order to receive the messages published during the offline period when the su
 + Unless **ensuring that all messages are processed in order**, this mechanism could **NOT** support multiple threads/processes.
 + Automatically removing the messages that have been received and processed by all subscribers.
 
-The architecture of the mechanism is as follows.
-![architecture.png](./architecture.png)
-The keys in Redis is as follows.
+The architecture of the mechanism is as follows.  
+![architecture.png](./architecture.png)  
+The keys in Redis is as follows.  
 ![keys_in_redis.png](./keys_in_redis.png)
 
 

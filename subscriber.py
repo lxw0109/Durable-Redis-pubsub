@@ -13,8 +13,8 @@ import time
 
 from public_utils import *
 
-# SUBSCRIBER = "sentiment_analysis"
-SUBSCRIBER = "news_importance"
+SUBSCRIBER = "sentiment_analysis"
+# SUBSCRIBER = "news_importance"
 
 def process_news(redis_conn, subscriber, message):
     # TODO: interface to "Rui Li,  Huanyong Liu, Xiaowei Liu"
@@ -48,18 +48,18 @@ def update_process_stats(redis_conn, subscriber, msg_id):
         redis_conn.zremrangebyscore(MESSAGES, 0, min_id[0][1])
 
 
-def process_history_news(redis_conn, subscriber):
+def process_offline_messages(redis_conn, subscriber):
     """
     Process the news that is received when the subscriber is offline.
     :param redis_conn: 
     :param subscriber: 
     :return: flag(表征是否存在历史消息)
     """
-    flag, history_messages = get_pending_messages(redis_conn, subscriber)
-    # history_messages: <type 'list'> list of dict: [{u'message': u'message-1', u'msg_id': 1}, {u'message': u'message-2', u'msg_id': 2}, {u'message': u'message-3', u'msg_id': 3}, {u'message': u'message-4', u'msg_id': 4}, {u'message': u'message-5', u'msg_id': 5}, {u'message': u'message-6', u'msg_id': 6}, {u'message': u'message-7', u'msg_id': 7}, {u'message': u'message-8', u'msg_id': 8}, {u'message': u'message-9', u'msg_id': 9}, {u'message': u'message-10', u'msg_id': 10}, {u'message': u'message-11', u'msg_id': 11}, {u'message': u'message-12', u'msg_id': 12}, {u'message': u'message-13', u'msg_id': 13}, {u'message': u'message-14', u'msg_id': 14}, {u'message': u'message-15', u'msg_id': 15}, {u'message': u'message-16', u'msg_id': 16}, {u'message': u'message-17', u'msg_id': 17}, {u'message': u'message-18', u'msg_id': 18}, {u'message': u'message-19', u'msg_id': 19}, {u'message': u'message-20', u'msg_id': 20}]
+    flag, offline_messages = get_pending_messages(redis_conn, subscriber)
+    # offline_messages: <type 'list'> list of dict: [{u'message': u'message-1', u'msg_id': 1}, {u'message': u'message-2', u'msg_id': 2}, {u'message': u'message-3', u'msg_id': 3}, {u'message': u'message-4', u'msg_id': 4}, {u'message': u'message-5', u'msg_id': 5}, {u'message': u'message-6', u'msg_id': 6}, {u'message': u'message-7', u'msg_id': 7}, {u'message': u'message-8', u'msg_id': 8}, {u'message': u'message-9', u'msg_id': 9}, {u'message': u'message-10', u'msg_id': 10}, {u'message': u'message-11', u'msg_id': 11}, {u'message': u'message-12', u'msg_id': 12}, {u'message': u'message-13', u'msg_id': 13}, {u'message': u'message-14', u'msg_id': 14}, {u'message': u'message-15', u'msg_id': 15}, {u'message': u'message-16', u'msg_id': 16}, {u'message': u'message-17', u'msg_id': 17}, {u'message': u'message-18', u'msg_id': 18}, {u'message': u'message-19', u'msg_id': 19}, {u'message': u'message-20', u'msg_id': 20}]
     if flag:
         print("Processing {0}'s history news:".format(subscriber))
-        for msg_dic in history_messages:
+        for msg_dic in offline_messages:
             process_news(redis_conn, subscriber, msg_dic)
     return flag
 
@@ -67,7 +67,7 @@ def process_history_news(redis_conn, subscriber):
 def subscribe_news_id(redis_conn, recipient, channels):
     """
     :param redis_conn: a connection of redis, the return value of get_redis_conn().
-    :param recipientr: The same as the "subscriber" parameter in process_history_news() and update_process_stats().
+    :param recipientr: The same as the "subscriber" parameter in process_offline_messages() and update_process_stats().
     :param channels: list of channel names(str).
     :return: None
     """
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # Before listening, we SHOULD process the news which is received when the subscriber is offline.
     flag = True
     while flag:
-        flag = process_history_news(redis_conn, subscriber=SUBSCRIBER)
+        flag = process_offline_messages(redis_conn, subscriber=SUBSCRIBER)
 
     # TODO： NOTE： 如果在while循环结束，到subscribe_news_id()的这段时间有新的message进入，那么这部分消息仍然是会丢失的（如何保证这部分数据也不丢失？）
 
